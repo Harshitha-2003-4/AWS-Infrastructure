@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Deploy an EC2 instance and Security Group for Drift Detection'
+
+Parameters:
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-0b6728e5a06582043
+    Description: Subnet to launch the EC2 instance into (must belong to VPC vpc-04ff0baa05a535e26)
+
+Resources:
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Allow SSH access"
+      VpcId: vpc-04ff0baa05a535e26
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0  # Open to all (use cautiously)
+
+  MyEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-075686beab831bb7f  # Replace with a valid AMI for your region
+      KeyName: real  # Replace with your actual key pair name
+      NetworkInterfaces:
+        - DeviceIndex: 0
+          SubnetId: !Ref SubnetId
+          AssociatePublicIpAddress: true
+          GroupSet:
+            - !Ref MySecurityGroup
+      Tags:
+        - Key: Name
+          Value: "Drift-Detection-EC2"
+
+Outputs:
+  InstanceId:
+    Description: "The ID of the EC2 instance"
+    Value: !Ref MyEC2Instance
+
+  PublicIP:
+    Description: "Public IP address of the EC2 instance"
+    Value: !GetAtt MyEC2Instance.PublicIp
